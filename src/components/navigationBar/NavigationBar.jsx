@@ -21,7 +21,6 @@ function NavBar ({id}) {
             setImg(e.data().image)
         })
     }
-     
     
     return (
         <div className="flex justify-between p-1 bg-blue-500 px-10 text-white font-mono text-xl">
@@ -31,7 +30,7 @@ function NavBar ({id}) {
             </div>
             <Link to={`/profile/${id}`} className="hover:bg-blue-200/50 p-1 rounded flex">
                 <div className="rounded-full mr-3 overflow-hidden">
-                    <img src={img} className="w-8"/>
+                    <img src={img} className="w-8 h-8"/>
                 </div>
                 <div className="">profile</div>
             </Link>

@@ -1,4 +1,3 @@
-import { useContext } from "react";
 import { Link } from "react-router-dom";
 
 const WorkspaceList = ({idWorkspace, workspaceRender, idUser}) => {

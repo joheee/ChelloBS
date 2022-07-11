@@ -1,21 +1,19 @@
-import { useParams } from 'react-router-dom'
-import { useState, useEffect, createContext } from 'react'
-import { Link } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
+import { useState, useEffect, useContext } from 'react'
 import { db } from '../../../firebase/FirebaseHelper'
 import { collection, addDoc, query, where, getDocs } from 'firebase/firestore'
-import { async } from '@firebase/util'
-import WorkspaceList from './WorkspaceList'
+import {refreshContext} from './WorkspaceSidebar'
 
 const WorkspaceContainer = () => {
     
     const {id} = useParams()
+    const refresh = useContext(refreshContext)
     
     let workspaceObj = {title:'', visibility:''}
     const [workspaceRender, setWorkspaceRender] = useState([])
     const [idWorkspace, setIdWorkspace] = useState([])
     const [errorMsg, setErrorMsg] = useState('')
-    
-    var currentWorkspaceData = createContext(null)
+    const navigate = useNavigate()
     
     const insertWorkspaceCollection = async () => {
         if(workspaceObj.title !== '' && workspaceObj.visibility !== ''){
@@ -25,8 +23,12 @@ const WorkspaceContainer = () => {
                 workspaceVisibility: workspaceObj.visibility,
                 workspaceMember: [id],
                 workspaceAdmin: [id]
-            }).then(()=> {console.log('perform create new workspace')})
-            setErrorMsg('')
+            }).then(()=> {
+                alert(workspaceObj.title + ' is added to your workspace')
+                refresh[1](!refresh[0])
+                setErrorMsg('')
+                navigate(`/refresh/${id}`)
+            })
         } else {
             setErrorMsg('title or visibility must be filled')
         }
@@ -49,11 +51,9 @@ const WorkspaceContainer = () => {
     const [trigger, setTrigger] = useState(0)
     useEffect(()=>{
         renderWorkspace()
-        console.log(workspaceRender)
     }, [trigger])
     
     useEffect(() => {
-        console.log(idWorkspace)
     }, [idWorkspace])
     
     const handleTitle = (e) => {
@@ -72,22 +72,17 @@ const WorkspaceContainer = () => {
     }
     
     return ( 
-        <div className="flex flex-wrap justify-center">
-        
-            <div className="bg-blue-200/50 flex flex-col p-2 font-mono items-center rounded w-64 m-5">
-                <h1 className="font-black text-3xl my-3">new workspace</h1>
-                <input onChange={(e) => handleTitle(e)} type="text" className="m-2 w-44 p-0.5 px-2 py-2 rounded" placeholder="title"/>
-                <select onChange={(e) => handleVisibility(e)}className="w-44 rounded py-2">
-                    <option value="public">public</option>
-                    <option value="private">private</option>
-                </select>
-                
-                <div className="mt-3 text-red-500 font- w-44 text-center">{errorMsg}</div>
-                
-                <button onClick={() => handleWorkspace()} className="bg-blue-700 px-7 w-32 my-3 rounded hover:bg-blue-700/50 text-white">add workspace</button>
-            </div>
+        <div className="flex flex-col font-mono items-center">
+            <h1 className="font-black text-3xl my-3">new workspace</h1>
+            <input onChange={(e) => handleTitle(e)} type="text" className="m-2 w-60 p-0.5 px-2 py-2 rounded" placeholder="title"/>
+            <select onChange={(e) => handleVisibility(e)}className="w-60 rounded py-2">
+                <option value="public">public</option>
+                <option value="private">private</option>
+            </select>
             
-            <WorkspaceList idWorkspace={idWorkspace} workspaceRender={workspaceRender} idUser={id}/>  
+            <div className="mt-3 text-red-500 font- w-44 text-center">{errorMsg}</div>
+            
+            <button onClick={() => handleWorkspace()} className="bg-blue-500/80 hover:bg-blue-500/40 px-5 py-3 rounded text-white">add workspace</button>
         </div>
     );
 

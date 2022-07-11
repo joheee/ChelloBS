@@ -1,71 +1,24 @@
 import NavBar from "../navigationBar/NavigationBar";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { doc, getDoc, addDoc, collection, query, where, getDocs } from 'firebase/firestore'
 import { db } from '../../firebase/FirebaseHelper'
 import { createContext, useEffect, useState } from "react";
-import WorkspaceMember from "./WorkspaceMember";
-import WorkspaceAdmin from "./WorkspaceAdmin";
-import InvitationForm from "./InvitationForm";
-import MessageDisplay from '../messages/MessageDisplay'
-export const WorkspaceContext = createContext()
+import BoardItem from "./BoardItem";
+
+export const triggerContext = createContext()
 
 const BoardContainer = () => {
     
     const {workspaceID, userID} = useParams()
     const [workspaceIdentity, setWorkspaceIdentity] = useState([])
-    const [inviteBool, setInviteBool] = useState(false)
-    const [memberBool, setMemberBool] = useState(false)
     
     const getMemberAdmin = () => {
         const docRef = doc(db,'Workspaces', workspaceID)
-        const currentDoc =  getDoc(docRef).then((e) => {
-            let workspaceData = {
-                currentWorkspaceID: '',
-                currentUserID: '',
-                workspaceTitle:'',
-                workspaceAdmin:[],
-                workspaceMember:[]
-            }
-            workspaceData.currentWorkspaceID = workspaceID
-            workspaceData.currentUserID = userID
-            workspaceData.workspaceTitle = e.data().workspaceTitle
-            workspaceData.workspaceAdmin = e.data().workspaceAdmin
-            workspaceData.workspaceMember = e.data().workspaceMember    
-            setWorkspaceIdentity(workspaceData)
+        getDoc(docRef).then((e) => {
+            setWorkspaceIdentity({...e.data()})
         })
     }
     
-    useEffect(()=>{
-        getMemberAdmin()
-    }, [])
-    
-    const InvitationFormToggle = () => {
-        if(inviteBool === true){
-            return ( 
-                <InvitationForm/>
-            )
-        }
-    }
-    const WorkspaceAdminMemberToggle = () => {
-        if(memberBool === true) {
-            return (
-                <div className="bg-blue-200/50 flex flex-col p-4 font-mono text-2xl items-center w-96 rounded m-5">
-                    <div className="p-2 gap-10">
-                        <WorkspaceAdmin /> 
-                        <WorkspaceMember />
-                    </div>
-                </div>
-            )
-        }
-    }
-    const InviteMemberButtonToggle = () => {
-        return (
-            <div className="bg-blue-200/50 flex p-6 font-mono text-2xl justify-evenly items-center w-96 rounded ml-5 mt-5 mr-5">
-                <button onClick={() => setInviteBool(!inviteBool)} className="bg-blue-500 px-7 py-0.5 rounded hover:bg-blue-500/50 text-white">invite</button>
-                <button onClick={() => setMemberBool(!memberBool)} className="bg-blue-500 px-7 py-0.5 rounded hover:bg-blue-500/50 text-white">member</button>
-            </div>
-        )
-    }
     
     const [popUpBool, setPopUpBool] = useState(false)
     let boardTitleInput = ''
@@ -87,7 +40,9 @@ const BoardContainer = () => {
         addDoc(docRef,{
             boardTitle: boardTitleInput,
             workspaceID:workspaceID,
+            boardVisibility: 'public',
             boardStatus: true,
+            boardFavourite: false,
             boardAdmin:[userID],
             boardMember:[userID]
         }).then(e => {
@@ -98,19 +53,22 @@ const BoardContainer = () => {
         })
     }
     
+    const getAdminIdentifier = (boardAdmin, userID) => {
+        return boardAdmin.indexOf(userID)
+    }
+    
     const [renderBoard, setRenderBoard] = useState([])
-    const [saveBoardID, setSaveBoardID] = useState([])
     const boardRender = () => {
         let currentBoard = []
-        let currentBoardID = []
         const queryStatement = query(collection(db,'Boards'), where('boardMember' ,'array-contains', userID), where('workspaceID', '==', workspaceID))
         getDocs(queryStatement).then(e => {
             e.forEach(item => {
-                currentBoard.push(item.data())
+                let isAdmin = false
+                if(getAdminIdentifier(item.data().boardAdmin, userID) != -1){
+                    isAdmin = true
+                }
+                currentBoard.push({...item.data(), boardID:item.id, isAdmin:isAdmin})
                 setRenderBoard(currentBoard)
-                
-                currentBoardID.push(item.id)
-                setSaveBoardID(currentBoardID)
             })
         })
     }
@@ -118,13 +76,13 @@ const BoardContainer = () => {
     const [trigger, setTrigger] = useState(false)
     useEffect(()=>{
         boardRender()
-        console.log(renderBoard)
+        getMemberAdmin()
     },[trigger])
     
-    const PopUpAddDisplay = () => {
+    const AddNewBoardForm = () => {
         if(popUpBool === true) {
             return (
-                <div className="h-full w-full bg-black/30 fixed">
+                <div className="h-full w-full bg-black/30 fixed z-10">
                     <div className="flex justify-center items-center h-full">
                         <div className="bg-white/80 px-10 py-7 rounded relative text-center flex flex-col items-center justify-center gap-2">
                             <button onClick={e => setPopUpBool(!popUpBool)} className="p-2 absolute top-2 right-2 bg-blue-500/80 hover:bg-blue-500/40 w-10 rounded text-white">x</button>
@@ -140,47 +98,33 @@ const BoardContainer = () => {
     }
     
     const BoardList = () => {
-        let count = 0
-        if(renderBoard != []){
-            return (
-                renderBoard.map((item) => ((
-                    <div key={count}>
-                        <Link to={`/card/${workspaceID}/${saveBoardID[count++]}/${userID}/${item.boardTitle}`}>
-                            <div  className="p-2 bg-blue-500 w-64 h-64 rounded flex justify-center items-center">
-                                <div className="text-white p-2 text-center">{item.boardTitle}</div>
-                            </div>
-                        </Link>
-                    </div>
-                )))
-            )
-        }
+        return (
+            renderBoard.map((item) => ((
+                <BoardItem key={item.boardID} workspaceID={workspaceID} item={item} userID={userID}/>
+            )))
+        )
     }
     
     if(workspaceIdentity != []) {
         return ( 
             <div>
-                <PopUpAddDisplay/> 
-                
-                <NavBar id={userID}/>
+                <triggerContext.Provider value={[trigger, setTrigger]}>
+                    <AddNewBoardForm/> 
                     
-                <WorkspaceContext.Provider value={workspaceIdentity}>
-                    <div className="text-7xl font-black text-blue-500 my-5 text-center">{workspaceIdentity.workspaceTitle}'s workspace</div>
+                    <NavBar id={userID}/>
+                    
+                    <div className="text-7xl font-black text-blue-500 m-5 text-center">{workspaceIdentity.workspaceTitle}'s workspace</div>
                     <div className="flex justify-center">
-                        <div className="">
-                            <InviteMemberButtonToggle/>
-                            <InvitationFormToggle/>
-                            <WorkspaceAdminMemberToggle/>
-                        </div>
                         
-                        <div className="bg-blue-200/50 flex p-5 font-mono text-2xl gap-5 items-start flex-wrap w-screen rounded mr-5 my-5">
+                        <div className="bg-blue-200/50 flex p-5 font-mono text-2xl gap-5 items-start flex-wrap w-screen rounded m-5">
                             
                             <BoardList/>
                             
-                            <button onClick={e => setPopUpBool(!popUpBool)} className="p-2 bg-blue-500/80 hover:bg-blue-500/40 w-64 rounded text-white">+ add board</button>
+                            <button onClick={e => setPopUpBool(!popUpBool)} className="p-2 bg-blue-500/80 hover:bg-blue-500/40 hover:scale-105 duration-300 w-64 rounded text-white">+ add board</button>
                         </div>
         
                     </div>
-                </WorkspaceContext.Provider>
+                </triggerContext.Provider>
             </div>
         );
     }
