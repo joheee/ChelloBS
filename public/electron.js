@@ -13,7 +13,14 @@ let mainWindow;
 
 function createWindow() {
     // Create the browser window.
-    mainWindow = new BrowserWindow({width: 800, height: 600});
+    mainWindow = new BrowserWindow({
+        width: 800, 
+        height: 600, 
+        webPreferences:{
+            nodeIntegration: true,  
+        },
+        icon:'src/spongeBob.ico'
+    });
 
     // and load the index.html of the app.
     mainWindow.loadURL('http://localhost:3000');
@@ -43,6 +50,17 @@ app.on('window-all-closed', function () {
         app.quit()
     }
 });
+
+app.setUserTasks([
+    {
+        program: process.execPath,
+        arguments: '--new-window',
+        iconPath: process.execPath,
+        iconIndex: 0,
+        title: 'New Window',
+        description: 'Create a new window'
+    }
+])
 
 app.on('activate', function () {
     // On OS X it's common to re-create a window in the app when the
