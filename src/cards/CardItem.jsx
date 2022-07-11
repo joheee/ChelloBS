@@ -262,13 +262,15 @@ const EachCardItem = ({card, trigger, board, item}) => {
             return watcher != userID
         })
         let otherUserArr = []
-        const queryStateSecond = query(collection(db, 'Users'), where('uid', 'in', cardWatcher))
-        onSnapshot(queryStateSecond, e => {
-            e.forEach(user => {
-                otherUserArr.push({...user.data()})
-                setCardWatcherExceptUser(otherUserArr)
+        if(cardWatcher.length !== 0){
+            const queryStateSecond = query(collection(db, 'Users'), where('uid', 'in', cardWatcher))
+            onSnapshot(queryStateSecond, e => {
+                e.forEach(user => {
+                    otherUserArr.push({...user.data()})
+                    setCardWatcherExceptUser(otherUserArr)
+                })
             })
-        })
+        }
     }
     let uninvitedMemberInput = ''
     const handleUninvitedMember = (e) => {
