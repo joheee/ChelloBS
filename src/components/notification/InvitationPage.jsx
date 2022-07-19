@@ -1,4 +1,4 @@
-import { arrayUnion, doc, updateDoc, query, where, collection, getDocs, deleteField, deleteDoc } from "firebase/firestore";
+import { arrayUnion, doc, updateDoc, query, where, collection, getDocs, deleteField, deleteDoc, getDoc, addDoc, onSnapshot } from "firebase/firestore";
 import { useNavigate, useParams } from "react-router-dom";
 import {db} from '../../firebase/FirebaseHelper'
 
@@ -8,15 +8,30 @@ const InvitationWorkspacePageContainer = () => {
     const navigate = useNavigate()
     
     const deleteMessage = (text) => {
+        let userEmail = ''
+        getDocs(query(collection(db, 'Users'), where('uid', '==', userID)))
+        .then(e => {
+            e.forEach(item => userEmail = item.data().email)
+        })
+
         if(workspaceID !== undefined) {
-            console.log(boardID)
             const queryStatementWorkspace = query(collection(db, 'Messages'), where('message', '==', workspaceID), where('receiver', '==', userID), where('workspaceTitle', '==', title))
             getDocs(queryStatementWorkspace).then(e => {
                 e.forEach(item => {
                     deleteDoc(item.ref).then(() => {
                         alert(text)
-                        navigate(`/workspace/${userID}`)
                     })
+                })
+            })
+            getDoc(doc(db, 'Workspaces', workspaceID))
+            .then(item => {
+                let temp = {...item.data(), workspaceID:item.id}
+                addDoc(collection(db, 'Notifications'), {
+                    workspaceTitle: temp.workspaceTitle,
+                    workspaceMember: temp.workspaceMember,
+                    invited: userEmail
+                }).then(() => {
+                    navigate(`/workspace/${userID}`)
                 })
             })
         }

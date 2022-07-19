@@ -1,14 +1,16 @@
+import { useContext } from "react";
 import { useParams } from "react-router-dom";
+import { OtherWatcherContext } from "./CardCommentContainer";
 
-const CardCommentItem = ({card, trigger, board, item, comment}) => {
+const CardCommentItem = (prop) => {
     
     const {userID} = useParams()
-    console.log(comment)
+    const otherWatcher = useContext(OtherWatcherContext)
     
     return ( 
         <div className="grid text-base gap-5 overflow-auto h-60">
             {
-                comment.map(item => (
+                prop.comment.map(item => (
                     <div key={item.cardCommentID} className="">
                         {
                             userID === item.commentSender ? 

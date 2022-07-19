@@ -37,7 +37,7 @@ const CardListItem = ({item, trigger, board}) => {
     const EditCardForm = () => {
         if(boolEditCard === true) {
             return (
-                <div className="h-full w-full bg-black/30 fixed top-0 left-0 z-30">
+                <div className="h-full w-full bg-black/30 fixed top-0 left-0 z-40">
                     <div className="flex justify-center items-center h-full">
                         <div className="bg-white/80 px-10 py-7 rounded relative text-center flex flex-col items-center justify-center gap-2">
                             <button onClick={e => handleCreateNewCard()} className="p-2 absolute top-2 right-2 bg-blue-500/80 hover:bg-blue-500/40 w-10 rounded text-white">x</button>
@@ -106,7 +106,7 @@ const CardListItem = ({item, trigger, board}) => {
                         <div onClick={e => setBoolInputCardListTitle(!boolInputCardListTitle)} className="text-white p-2">{item.cardListTitle}</div>
                     }
                     <div className="relative">
-                        <button onClick={e => setBoolEditCardList(!boolEditCardList)} className="bg-white/80 hover:bg-white/40 w-10 h-full rounded text-bg-blue-500">:</button>
+                        <button onClick={e => setBoolEditCardList(!boolEditCardList)} className="bg-white/80 hover:bg-white/40 w-10 h-full rounded text-bg-blue-500 hover:scale-105 duration-300">:</button>
                         <EditCardListContainer/>
                     </div>
                 </div>
@@ -115,7 +115,7 @@ const CardListItem = ({item, trigger, board}) => {
                 
                     <CardContainer item={item} trigger={trigger} board={board}/>
                     
-                    <button onClick={e => handleCreateNewCard()} className="bg-white/80 hover:bg-white/40 m-2 p-2 rounded">+ add a card</button>
+                    <button onClick={e => handleCreateNewCard()} className="bg-white/80 hover:bg-white/40 m-2 p-2 rounded hover:scale-105 duration-300">+ add a card</button>
                 
                 </div>
             </div>

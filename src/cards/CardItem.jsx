@@ -8,6 +8,8 @@ import "react-big-calendar/lib/css/react-big-calendar.css";
 import CardCommentContainer from "./CardCommentContainer";
 import CardMap from "./CardMap";
 import CardAttachment from "./CardAttachment";
+import CardCheckListContainer from "./CardCheckList/CardCheckListContainer";
+import CardCheckListContainerItem from "./CardCheckList/CardCheckListContainerItem";
 
 const EachCardItem = ({card, trigger, board, item}) => {
     const navigate = useNavigate()
@@ -25,6 +27,7 @@ const EachCardItem = ({card, trigger, board, item}) => {
             })
         }
     }
+
     const InputTextCardTitle = () => {
         return (
             <input onKeyDown={e => handleCardListTitleEnter(e)} type="text" className="rounded px-2 bg-blue-400 placeholder-white text-white" placeholder={card.cardTitle}/>
@@ -368,6 +371,42 @@ const EachCardItem = ({card, trigger, board, item}) => {
         }
     }
     
+    let checkListTitle = ''
+    const checkListTitleInput = (e) => {
+        checkListTitle = e.target.value
+    }
+    const createCheckList = () => {
+        if(checkListTitle !== ''){
+            const checkListReference = collection(db, 'Boards', item.boardID, 'CardLists', item.cardListID, 'Cards', card.cardID, 'CardCheckLists')
+            addDoc(checkListReference, {
+                checkListTitle: checkListTitle,
+                toDo:[]
+            })
+            .then(e => {
+                setBoolCheckList(!boolCheckList)
+                trigger[1](!trigger[0])
+                alert('success create card list')
+            })
+        }else alert('check list title must not empty')
+    }
+    const [boolCheckList, setBoolCheckList] = useState(false)
+    const CreateCheckList = () => {
+        if(boolCheckList === true){
+            return (
+                <div className="bg-white p-4 rounded flex flex-col items-center gap-4 w-72  absolute -right-20 mt-2">
+                    <div className="">create checklist</div>
+                    
+                    <input onChange={checkListTitleInput} type="text" className="w-60 rounded p-2 border-2 border-blue-500 placeholder-white " placeholder=''/>
+                    
+                    <div className="h-1 bg-blue-500 w-60 my-2"></div>
+                    
+                    <button onClick={e => createCheckList()} className="p-2 bg-blue-500/80 hover:bg-blue-500/40 w-60 rounded text-white">create card</button>
+                    
+                </div>
+            )
+        }
+    }
+
     const [boolCardMap, sestBoolCardMap] = useState(false)
     const [boolCardAttachment, setBoolCardAttachment] = useState(false)
     const handleExitPressed = () => {
@@ -379,6 +418,8 @@ const EachCardItem = ({card, trigger, board, item}) => {
         setBoolLabelCard(false)
         setLinkUninvitedUser(false)
         setBoolCardAttachment(false)
+        sestBoolCardMap(false)
+        setBoolCheckList(false)
     }
     useEffect(() => {
         MyCardCalendar()
@@ -386,8 +427,7 @@ const EachCardItem = ({card, trigger, board, item}) => {
         getUninvitedCardWatcher()
         getMonthCardDue()
     },[trigger[0]])
-    
-    let count = 0
+ 
     const [boolEditCardForm, setBoolEditCardForm] = useState(false)
     const EditCardForm = () => {
         if(boolEditCardForm === true) {
@@ -401,7 +441,7 @@ const EachCardItem = ({card, trigger, board, item}) => {
                         :
                         null
                     }
-                    
+
                     <div className="bg-white w-1/2 p-5 rounded text-xl">
                         
                         <div className="flex justify-between text-3xl">
@@ -423,7 +463,6 @@ const EachCardItem = ({card, trigger, board, item}) => {
                             
                                 <div className="flex gap-4">
                                     <div className="grid">
-                                        
                                         {
                                             cardLabelItem.length !== 0 ?
                                             <div className="">
@@ -464,9 +503,9 @@ const EachCardItem = ({card, trigger, board, item}) => {
                                         </div>
                                     }
                                 </div>
-                            
+                                    
                                 {
-                                    card.cardAttachment !==    undefined      ? 
+                                    card.cardAttachment !== undefined ? 
                                     <div className="grid">
                                         <div className="">Attachment</div>
                                         {
@@ -478,14 +517,19 @@ const EachCardItem = ({card, trigger, board, item}) => {
                                         }
                                     </div> : null
                                 }
-                            
+
+                                
+                                <CardCheckListContainerItem card={card} trigger={trigger} board={board} item={item}/>
+                                
+
                                 <div className="">
                                     <div className="">comment</div>
                                     <CardCommentContainer card={card} trigger={trigger} board={board} item={item}/>
                                 </div>
-                            
+                                
+
                             </div>
-                            
+
                             <div className="flex flex-col gap-2">
                                 
                                 <button onClick={e => {
@@ -495,6 +539,7 @@ const EachCardItem = ({card, trigger, board, item}) => {
                                     setLinkUninvitedUser(false)
                                     sestBoolCardMap(false)
                                     setBoolCardAttachment(false)
+                                    setBoolCheckList(false)
                                 }}
                                 className="p-2 bg-blue-500/80 hover:bg-blue-500/40 w-64 rounded text-white">watchers</button>
                                 
@@ -505,6 +550,7 @@ const EachCardItem = ({card, trigger, board, item}) => {
                                     setLinkUninvitedUser(false)
                                     sestBoolCardMap(false)
                                     setBoolCardAttachment(false)
+                                    setBoolCheckList(false)
                                     
                                 }} className="p-2 bg-blue-500/80 hover:bg-blue-500/40 w-64 rounded text-white">labels</button>
                                 
@@ -515,10 +561,21 @@ const EachCardItem = ({card, trigger, board, item}) => {
                                     setLinkUninvitedUser(!linkUninvitedUser)
                                     sestBoolCardMap(false)
                                     setBoolCardAttachment(false)
+                                    setBoolCheckList(false)
                                     
                                 }} className="p-2 bg-blue-500/80 hover:bg-blue-500/40 w-64 rounded text-white">generate link</button>
                                 
-                                <button className="p-2 bg-blue-500/80 hover:bg-blue-500/40 w-64 rounded text-white">checklist</button>
+                                <div className="relative">
+                                    <button  onClick={e => {
+                                    setBoolUninvitedMember(false)
+                                    setBoolLabelCard(false)
+                                    setBoolDateCard(false)
+                                    setLinkUninvitedUser(false)
+                                    sestBoolCardMap(false)
+                                    setBoolCardAttachment(false)
+                                    setBoolCheckList(!boolCheckList)}} className="p-2 bg-blue-500/80 hover:bg-blue-500/40 w-64 rounded text-white">checklist</button>
+                                    <CreateCheckList/>
+                                </div>
                                 
                                 <button onClick={e => {
                                     setBoolUninvitedMember(false)
@@ -527,6 +584,7 @@ const EachCardItem = ({card, trigger, board, item}) => {
                                     setLinkUninvitedUser(false)
                                     sestBoolCardMap(false)
                                     setBoolCardAttachment(!boolCardAttachment)
+                                    setBoolCheckList(false)
                                     
                                 }} className="p-2 bg-blue-500/80 hover:bg-blue-500/40 w-64 rounded text-white">attachment</button>
                                 
@@ -537,6 +595,7 @@ const EachCardItem = ({card, trigger, board, item}) => {
                                     setLinkUninvitedUser(false)
                                     sestBoolCardMap(false)
                                     setBoolCardAttachment(false)
+                                    setBoolCheckList(false)
                                     
                                 }} className="p-2 bg-blue-500/80 hover:bg-blue-500/40 w-64 rounded text-white">dates</button>
                                 
@@ -547,6 +606,7 @@ const EachCardItem = ({card, trigger, board, item}) => {
                                     setLinkUninvitedUser(false)
                                     sestBoolCardMap(!boolCardMap)
                                     setBoolCardAttachment(false)
+                                    setBoolCheckList(false)
                                     
                                 }}className="p-2 bg-blue-500/80 hover:bg-blue-500/40 w-64 rounded text-white">location</button>
                                 
@@ -577,7 +637,7 @@ const EachCardItem = ({card, trigger, board, item}) => {
     return ( 
         <div className="" key={card.cardID}>
             <EditCardForm/>
-            <div onClick={e => setBoolEditCardForm(!boolEditCardForm)} className="bg-white hover:bg-white/90 m-2 p-2 rounded cursor-pointer">
+            <div onClick={e => setBoolEditCardForm(!boolEditCardForm)} className="bg-white hover:bg-white/90 m-2 p-2 rounded cursor-pointer hover:scale-105 duration-300">
                 {
                     cardLabelItem.length !== 0 ?
                     <div className="">
